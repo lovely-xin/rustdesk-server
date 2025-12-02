@@ -1,0 +1,41 @@
+name: Build Windows Server
+
+on:
+  workflow_dispatch: # 允许你手动点击运行
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-windows:
+    name: Build for Windows
+    runs-on: windows-latest # 直接使用 Windows 环境，不需要 cross
+
+    steps:
+      # 1. 下载代码（必须包含 recursive 以下载 libs/hbb_common）
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # 2. 安装最新的稳定版 Rust
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      # 3. 编译（直接使用 cargo build，最稳的方法）
+      - name: Build Release
+        run: cargo build --release
+
+      # 4. 上传产物（hbbs.exe 和 hbbr.exe）
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-server-windows-x64
+          path: |
+            target/release/hbbs.exe
+            target/release/hbbr.exe
+            target/release/rustdesk-utils.exe
